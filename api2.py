@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import requests
+import base64
 import os
 
 app = Flask(__name__)
@@ -27,13 +28,14 @@ def predict():
 
     file = request.files['image']
     img_bytes = file.read()
+    img_base64 = base64.b64encode(img_bytes).decode('utf-8')
 
     try:
+        # Cara 1: kirim sebagai multipart
         response = requests.post(
             f"https://serverless.roboflow.com/{MODEL_ID}",
             params={"api_key": API_KEY},
-            headers={"Content-Type": "application/x-www-form-urlencoded"},
-            data=img_bytes
+            files={"file": ("image.jpg", img_bytes, "image/jpeg")}
         )
 
         result = response.json()
@@ -42,7 +44,7 @@ def predict():
         label = result.get('top', '')
         confidence = round(result.get('confidence', 0) * 100, 2)
 
-        if not label or confidence < 30:
+        if not label or confidence < 20:
             return jsonify({
                 'kondisi': 'unknown',
                 'label': 'Tidak dikenali',
