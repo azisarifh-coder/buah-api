@@ -1,14 +1,13 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import requests
-import base64
 import os
 
 app = Flask(__name__)
 CORS(app, origins="*")
 
 API_KEY = "szPAq1dmfLBxMLkWD3HB"
-MODEL_ID = "buah-segar-v2/3"  # versi baru
+MODEL_ID = "buah-segar-v2/3"
 
 print("Siap!", flush=True)
 
@@ -28,14 +27,13 @@ def predict():
 
     file = request.files['image']
     img_bytes = file.read()
-    img_base64 = base64.b64encode(img_bytes).decode('utf-8')
 
     try:
         response = requests.post(
             f"https://serverless.roboflow.com/{MODEL_ID}",
             params={"api_key": API_KEY},
-            headers={"Content-Type": "application/json"},
-            json={"image": img_base64}
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            data=img_bytes
         )
 
         result = response.json()
