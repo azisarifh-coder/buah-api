@@ -1,21 +1,19 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from inference_sdk import InferenceHTTPClient
-import tempfile
+import requests
 import os
 
 app = Flask(__name__)
 CORS(app, origins="*")
 
-CLIENT = InferenceHTTPClient(
-    api_url="https://serverless.roboflow.com",
-    api_key="szPAq1dmfLBxMLkWD3HB"
-)
+API_KEY = "7MRCmnutuGtExlnBLDCX"
+MODEL_ID = "buah-segar-v2/2"
+
 print("Siap!", flush=True)
 
 @app.route('/')
 def home():
-    return jsonify({'status': 'API berjalan!'})
+    return jsonify({'status': 'API Instafruit berjalan!'})
 
 @app.route('/predict', methods=['POST', 'OPTIONS'])
 def predict():
@@ -28,34 +26,29 @@ def predict():
         return jsonify({'error': 'Tidak ada gambar!'}), 400
 
     file = request.files['image']
-    print("File: " + str(file.filename), flush=True)
-
-    tmp = tempfile.NamedTemporaryFile(delete=False, suffix='.jpg')
-    file.save(tmp.name)
-    tmp.close()
+    img_bytes = file.read()
 
     try:
-        print("Mengirim ke Roboflow...", flush=True)
-        result = CLIENT.infer(tmp.name, model_id="buah-segar-v2/2")
+        response = requests.post(
+            f"https://serverless.roboflow.com/{MODEL_ID}",
+            params={"api_key": API_KEY},
+            files={"file": ("image.jpg", img_bytes, "image/jpeg")}
+        )
+        result = response.json()
         print("Result: " + str(result), flush=True)
-
-        if os.path.exists(tmp.name):
-            os.unlink(tmp.name)
 
         label = result.get('top', '')
         confidence = round(result.get('confidence', 0) * 100, 2)
 
-        if not label and result.get('predictions'):
-            top = result['predictions'][0]
-            if isinstance(top, dict):
-                label = top.get('class', '')
-                confidence = round(top.get('confidence', 0) * 100, 2)
-
-        if not label:
-            return jsonify({'error': 'Tidak ada prediksi!'}), 400
+        if not label or confidence < 20:
+            return jsonify({
+                'kondisi': 'unknown',
+                'label': 'Tidak dikenali',
+                'confidence': '0%',
+                'pesan': 'Foto kurang jelas, coba ambil foto lebih dekat!'
+            }), 200
 
         kondisi = 'fresh' if 'fresh' in label.lower() else 'rotten'
-
         return jsonify({
             'kondisi': kondisi,
             'label': label,
@@ -64,6 +57,8 @@ def predict():
 
     except Exception as e:
         print("Error: " + str(e), flush=True)
-        if os.path.exists(tmp.name):
-            os.unlink(tmp.name)
-        return jsonify({'error': str(e)})
+        return jsonify({'error': str(e)}), 500
+
+port = int(os.environ.get("PORT", 5000))
+print("Starting server di port " + str(port), flush=True)
+app.run(debug=False, port=port, host='0.0.0.0')
