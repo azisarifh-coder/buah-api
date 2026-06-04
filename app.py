@@ -6,7 +6,7 @@ import os
 app = Flask(__name__)
 CORS(app, origins="*")
 
-API_KEY = "7MRCmnutuGtExlnBLDCX"
+API_KEY = "8QPABxRsb6v6Impu2AV3"
 MODEL_ID = "buah-segar-v2/2"
 
 print("Siap!", flush=True)
@@ -35,9 +35,8 @@ def predict():
             files={"file": ("image.jpg", img_bytes, "image/jpeg")}
         )
         result = response.json()
-        print("Result: " + str(result), flush=True)
+        print("Full Result: " + str(result), flush=True)
 
-        # Ambil label & confidence dari berbagai format response
         label = ''
         confidence = 0.0
 
