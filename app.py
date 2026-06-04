@@ -37,8 +37,23 @@ def predict():
         result = response.json()
         print("Result: " + str(result), flush=True)
 
-        label = result.get('top', '')
-        confidence = round(result.get('confidence', 0) * 100, 2)
+        # Ambil label & confidence dari berbagai format response
+        label = ''
+        confidence = 0.0
+
+        # Format 1: top-level top & confidence
+        if result.get('top'):
+            label = result['top']
+            confidence = round(result.get('confidence', 0) * 100, 2)
+
+        # Format 2: predictions array
+        elif result.get('predictions') and len(result['predictions']) > 0:
+            top = result['predictions'][0]
+            if isinstance(top, dict):
+                label = top.get('class', '')
+                confidence = round(top.get('confidence', 0) * 100, 2)
+
+        print(f"Label: {label}, Confidence: {confidence}", flush=True)
 
         if not label or confidence < 20:
             return jsonify({
@@ -49,6 +64,7 @@ def predict():
             }), 200
 
         kondisi = 'fresh' if 'fresh' in label.lower() else 'rotten'
+
         return jsonify({
             'kondisi': kondisi,
             'label': label,
