@@ -167,7 +167,7 @@
 
 <script>
 const userId = <?= $user_id ?>;
-const API_URL = 'https://buah-api-production.up.railway.app/predict';
+const API_URL = 'http://127.0.0.1:5000/predict';
 let currentMode = 'upload';
 let stream = null;
 let realtimeInterval = null;
