@@ -1,7 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import requests
-import base64
 import os
 
 app = Flask(__name__)
@@ -14,7 +13,7 @@ print("Siap!", flush=True)
 
 @app.route('/')
 def home():
-    return jsonify({'status': 'API berjalan!'})
+    return jsonify({'status': 'API Instafruit berjalan!'})
 
 @app.route('/predict', methods=['POST', 'OPTIONS'])
 def predict():
@@ -28,10 +27,8 @@ def predict():
 
     file = request.files['image']
     img_bytes = file.read()
-    img_base64 = base64.b64encode(img_bytes).decode('utf-8')
 
     try:
-        # Cara 1: kirim sebagai multipart
         response = requests.post(
             f"https://serverless.roboflow.com/{MODEL_ID}",
             params={"api_key": API_KEY},
@@ -39,10 +36,21 @@ def predict():
         )
 
         result = response.json()
-        print("Result: " + str(result), flush=True)
+        print("Full Result: " + str(result), flush=True)
 
-        label = result.get('top', '')
-        confidence = round(result.get('confidence', 0) * 100, 2)
+        label = ''
+        confidence = 0.0
+
+        if result.get('top'):
+            label = result['top']
+            confidence = round(result.get('confidence', 0) * 100, 2)
+        elif result.get('predictions') and len(result['predictions']) > 0:
+            top = result['predictions'][0]
+            if isinstance(top, dict):
+                label = top.get('class', '')
+                confidence = round(top.get('confidence', 0) * 100, 2)
+
+        print(f"Label: {label}, Confidence: {confidence}", flush=True)
 
         if not label or confidence < 20:
             return jsonify({
