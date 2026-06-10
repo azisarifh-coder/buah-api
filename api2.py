@@ -6,7 +6,7 @@ import os
 app = Flask(__name__)
 CORS(app, origins="*")
 
-API_KEY = "szPAq1dmfLBxMLkWD3HB"
+API_KEY = "DGNlsvn7i3ifBkE5P6Nr"
 MODEL_ID = "buah-segar-v2/3"
 
 print("Siap!", flush=True)
